@@ -18,9 +18,11 @@ type ServConfiguration struct {
 
 //ServiceConfig configures the etcd cluster.
 type ServiceConfig struct {
-	ServiceName       string `yaml:"service_name"`
-	ListenAddress     string `yaml:"listene_address"`
-	AdvertisedAddress string `yaml:"advertised_address"`
+	ServiceName         string `yaml:"service_name"`
+	ListenAddress       string `yaml:"listene_address"`
+	AdvertisedAddress   string `yaml:"advertised_address"`
+	RegistryRefreshTime int    `yaml:"registry_refresh_time"`
+	RegistryTTL         int    `yaml:"registry_ttl"`
 }
 
 //TokenConfig config of token, default ttl:1 day, default token length 32 bytes.

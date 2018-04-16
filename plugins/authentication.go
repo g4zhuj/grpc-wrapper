@@ -1,7 +1,4 @@
-package plugin
-
-
-package authorization
+package plugins
 
 import (
 	"fmt"
@@ -15,10 +12,8 @@ import (
 
 	"time"
 
-
 	"dana-tech.com/wbw/logs"
 )
-
 
 type BasicToken struct {
 	mutex         sync.RWMutex
@@ -140,7 +135,6 @@ func InitToken(defaultToken string) {
 	BscToken.defaultToken = defaultToken
 	go BscToken.startTask(timeleft)
 }
-
 
 func getTokenFile() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
