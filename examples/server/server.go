@@ -18,9 +18,8 @@ func (s *grpcserver) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.Hel
 }
 
 func main() {
-
 	cfg := config.RegistryConfig{
-		Endpoints: "http://127.0.0.1:2379",
+		Endpoints: []string{"http://127.0.0.1:2379"},
 	}
 
 	serv := server.NewServerWrapper()

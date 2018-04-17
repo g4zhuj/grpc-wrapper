@@ -72,9 +72,19 @@ func (er *etcdRegistry) Register(ctx context.Context, target string, update nami
 	switch update.Op {
 	case naming.Add:
 		lsRsp, err := lsCli.Grant(ctx, int64(rgOpt.TTL/time.Second))
+		if err != nil{
+			return err
+		}
 		etcdOpts := []etcd.OpOption{etcd.WithLease(lsRsp.ID)}
 		_, err = er.cli.KV.Put(ctx, target+"/"+update.Addr, string(upBytes), etcdOpts...)
+		if err != nil{
+			return err
+		}
+		
 		lsRspChan, err := lsCli.KeepAlive(ctx, lsRsp.ID)
+		if err != nil{
+			return err
+		}
 		go func() {
 			for {
 				if _, ok := <-lsRspChan; !ok {
