@@ -2,11 +2,11 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 
-	"github.com/coreos/etcd/clientv3"
+	wrapper "github.com/g4zhuj/grpc-wrapper"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/naming"
 	"google.golang.org/grpc/reflection"
@@ -14,43 +14,42 @@ import (
 
 //Server wrapper of grpc server
 type ServerWrapper struct {
-	grpc.Server
-	opt      ServOption
-	resolver naming.Resolver
+	s        *grpc.Server
+	sopts    ServOption
+	registry wrapper.Registry
 }
 
-func NewServerWrapper() *ServerWrapper {
+func NewServerWrapper(opts ...ServOptions) *ServerWrapper {
+	var servWrapper ServerWrapper
+	for _, opt := range opts {
+		opt(&servWrapper.sopts)
+	}
+	return &servWrapper
+}
 
-	return &ServerWrapper{}
+func (sw *ServerWrapper) GetGRPCServer() *grpc.Server {
+	return sw.s
 }
 
 //Start start running server
-func (s *ServerWrapper) Start() {
-
-	lis, err := net.Listen("tcp", port)
+func (sw *ServerWrapper) Start() {
+	lis, err := net.Listen("tcp", sw.sopts.binding)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
-
-	cli, err := clientv3.NewFromURL("http://localhost:2379")
-	if err != nil {
-		fmt.Printf("nameing err %v\n", err)
-		return
-	}
-	r := &etcdnaming.GRPCResolver{Client: cli}
-	r.Update(context.TODO(), "my-service", naming.Update{Op: naming.Add, Addr: "127.0.0.1:50052", Metadata: "..."})
-
+	sw.s = grpc.NewServer()
 	// Register reflection service on gRPC server.
-	reflection.Register(s)
-	if err := s.Serve(lis); err != nil {
+	reflection.Register(sw.s)
+	if err := sw.s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
+	}
+	//registry
+	if sw.registry != nil {
+		sw.registry.Register(context.TODO(), sw.sopts.serviceName,
+			naming.Update{Op: naming.Add, Addr: sw.sopts.advertisedAddress, Metadata: "..."})
 	}
 }
 
 //Stop stop tht server
-func (s *ServerWrapper) Stop() {
-	s.resolver.Resolve
-	s.Server.Stop()
+func (sw *ServerWrapper) Stop() {
 }

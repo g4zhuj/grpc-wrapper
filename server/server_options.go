@@ -2,34 +2,31 @@ package server
 
 import (
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/naming"
+
+	wrapper "github.com/g4zhuj/grpc-wrapper"
 )
 
-//ServOption
+//ServOption option of server
 type ServOption struct {
 	serviceName       string
 	binding           string
 	advertisedAddress string
-	resolver          naming.Resolver
+	registry          wrapper.Registry
 	grpcOpts          []grpc.ServerOption
 }
 
 type ServOptions func(o *ServOption)
 
-
-
-func With
-
-func WithResolver(r naming.Resolver) ServOptions {
+//WithRegistry set registry
+func WithRegistry(r wrapper.Registry) ServOptions {
 	return func(o *ServOption) {
-		o.resolver = r
+		o.registry = r
 	}
 }
 
+//WithGRPCServOption set grpc options
 func WithGRPCServOption(opts []grpc.ServerOption) ServOptions {
 	return func(o *ServOption) {
 		o.grpcOpts = opts
 	}
 }
-
-

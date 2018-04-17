@@ -1,5 +1,12 @@
 package config
 
+import (
+	etcd "github.com/coreos/etcd/clientv3"
+	wrapper "github.com/g4zhuj/grpc-wrapper"
+	"github.com/g4zhuj/grpc-wrapper/plugins"
+	"google.golang.org/grpc/naming"
+)
+
 //CliConfiguration config of client
 type CliConfiguration struct {
 }
@@ -7,7 +14,7 @@ type CliConfiguration struct {
 //RegistryConfig configures the etcd cluster.
 type RegistryConfig struct {
 	RegistryType string   `yaml:"registry_type"` //etcd default
-	HostPorts    []string `yaml:"host_ports"`
+	Endpoints    []string `yaml:"endpoints"`
 	UserName     string   `yaml:"user_name"`
 	Pass         string   `yaml:"pass"`
 }
@@ -34,4 +41,31 @@ type TokenConfig struct {
 
 //OpenTracingConfig support jaeger and zipkin
 type OpenTracingConfig struct {
+}
+
+//NewResolver create a resolver for grpc
+func (regconf *RegistryConfig) NewResolver() (naming.Resolver, error) {
+	cli, err := etcd.New(etcd.Config{
+		Endpoints: regconf.Endpoints,
+		Username:  regconf.UserName,
+		Password:  regconf.Pass,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return plugins.NewEtcdResolver(cli), nil
+}
+
+//NewRegisty create a reistry for registering server addr
+func (regconf *RegistryConfig) NewRegisty() (wrapper.Registry, error) {
+
+	cli, err := etcd.New(etcd.Config{
+		Endpoints: regconf.Endpoints,
+		Username:  regconf.UserName,
+		Password:  regconf.Pass,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return plugins.NewEtcdRegisty(cli), nil
 }

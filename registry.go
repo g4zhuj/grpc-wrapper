@@ -7,11 +7,15 @@ import (
 	"google.golang.org/grpc/naming"
 )
 
+//DefaultRegInfTTL default ttl of server info in registry
+const DefaultRegInfTTL = time.Second * 50
+
 type RegistryOption struct {
 	TTL time.Duration
 }
 type RegistryOptions func(o *RegistryOption)
 
+//WithTTL set ttl
 func WithTTL(ttl time.Duration) RegistryOptions {
 	return func(o *RegistryOption) {
 		o.TTL = ttl
