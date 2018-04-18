@@ -20,6 +20,7 @@ const (
 type etcdRegistry struct {
 	cancal context.CancelFunc
 	cli    *etcd.Client
+	lsCli  etcd.Lease
 }
 
 type etcdWatcher struct {
@@ -40,7 +41,8 @@ func NewEtcdResolver(cli *etcd.Client) naming.Resolver {
 //NewEtcdRegisty create a reistry for registering server addr
 func NewEtcdRegisty(cli *etcd.Client) wrapper.Registry {
 	return &etcdRegistry{
-		cli: cli,
+		cli:   cli,
+		lsCli: etcd.NewLease(cli),
 	}
 }
 
@@ -63,31 +65,30 @@ func (er *etcdRegistry) Register(ctx context.Context, target string, update nami
 
 	ctx, cancel := context.WithTimeout(context.TODO(), resolverTimeOut)
 	er.cancal = cancel
-	lsCli := etcd.NewLease(er.cli)
-	var rgOpt wrapper.RegistryOption
+	rgOpt := wrapper.RegistryOption{TTL: wrapper.DefaultRegInfTTL}
 	for _, opt := range opts {
 		opt(&rgOpt)
 	}
 
 	switch update.Op {
 	case naming.Add:
-		lsRsp, err := lsCli.Grant(ctx, int64(rgOpt.TTL/time.Second))
-		if err != nil{
+		lsRsp, err := er.lsCli.Grant(ctx, int64(rgOpt.TTL/time.Second))
+		if err != nil {
 			return err
 		}
 		etcdOpts := []etcd.OpOption{etcd.WithLease(lsRsp.ID)}
 		_, err = er.cli.KV.Put(ctx, target+"/"+update.Addr, string(upBytes), etcdOpts...)
-		if err != nil{
+		if err != nil {
 			return err
 		}
-		
-		lsRspChan, err := lsCli.KeepAlive(ctx, lsRsp.ID)
-		if err != nil{
+		lsRspChan, err := er.lsCli.KeepAlive(context.TODO(), lsRsp.ID)
+		if err != nil {
 			return err
 		}
 		go func() {
 			for {
-				if _, ok := <-lsRspChan; !ok {
+				_, ok := <-lsRspChan
+				if !ok {
 					break
 				}
 			}

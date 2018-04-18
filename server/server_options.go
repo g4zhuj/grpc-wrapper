@@ -30,3 +30,24 @@ func WithGRPCServOption(opts []grpc.ServerOption) ServOptions {
 		o.grpcOpts = opts
 	}
 }
+
+//WithServiceName set service name
+func WithServiceName(sn string) ServOptions {
+	return func(o *ServOption) {
+		o.serviceName = sn
+	}
+}
+
+//WithBinding set binding
+func WithBinding(binding string) ServOptions {
+	return func(o *ServOption) {
+		o.binding = binding
+	}
+}
+
+//WithAdvertisedAddress set advertised address
+func WithAdvertisedAddress(addr string) ServOptions {
+	return func(o *ServOption) {
+		o.advertisedAddress = addr
+	}
+}

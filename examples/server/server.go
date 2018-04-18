@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/g4zhuj/grpc-wrapper/config"
-	"github.com/g4zhuj/grpc-wrapper/server"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 )
 
@@ -22,7 +21,20 @@ func main() {
 		Endpoints: []string{"http://127.0.0.1:2379"},
 	}
 
-	serv := server.NewServerWrapper()
-	pb.RegisterGreeterServer(serv.GetGRPCServer(), &grpcserver{})
-	serv.Start()
+	reg, err := cfg.NewRegisty()
+	if err != nil {
+		fmt.Printf("new registry err %v \n", err)
+		return
+	}
+
+	servConf := config.ServiceConfig{
+		ServiceName:       "test",
+		Binding:           ":1234",
+		AdvertisedAddress: "127.0.0.1:1234",
+	}
+	servWrapper := servConf.NewServer(reg)
+	if coreServ := servWrapper.GetGRPCServer(); coreServ != nil {
+		pb.RegisterGreeterServer(coreServ, &grpcserver{})
+		servWrapper.Start()
+	}
 }
