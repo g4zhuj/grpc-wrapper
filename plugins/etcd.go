@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"time"
 
-	wrapper "github.com/g4zhuj/grpc-wrapper"
-
-	etcd "github.com/coreos/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/naming"
 	"google.golang.org/grpc/status"
+
+	etcd "github.com/coreos/etcd/clientv3"
+
+	wrapper "github.com/g4zhuj/grpc-wrapper"
 )
 
 const (
