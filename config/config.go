@@ -15,6 +15,8 @@ import (
 
 //CliConfiguration config of client
 type CliConfiguration struct {
+	regCfg *RegistryConfig `yaml:"registry_config"`
+	logCfg *LoggerConfig   `yaml:"logger_config"`
 }
 
 //RegistryConfig configures the etcd cluster.
