@@ -8,6 +8,12 @@ type ZapLogger struct {
 	logger *zap.Logger
 }
 
+func NewZapLogger(logger *zap.Logger) *ZapLogger {
+	return &ZapLogger{
+		logger: logger,
+	}
+}
+
 func (zl *ZapLogger) Info(args ...interface{}) {
 	zl.logger.Sugar().Info(args...)
 }
@@ -57,6 +63,7 @@ func (zl *ZapLogger) Fatalf(format string, args ...interface{}) {
 }
 
 // V reports whether verbosity level l is at least the requested verbose level.
-func (zl *ZapLogger) V(args ...interface{}) {
+func (zl *ZapLogger) V(v int) bool {
 
+	return false
 }

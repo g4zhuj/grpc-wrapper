@@ -2,8 +2,9 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net"
+
+	"google.golang.org/grpc/grpclog"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/naming"
@@ -45,7 +46,7 @@ func (sw *ServerWrapper) Start() error {
 			return err
 		}
 	} else {
-		fmt.Println("registry is nil")
+		grpclog.Info("registry is nil")
 	}
 
 	// Register reflection service on gRPC server.
@@ -53,7 +54,6 @@ func (sw *ServerWrapper) Start() error {
 	if err := sw.s.Serve(lis); err != nil {
 		return err
 	}
-
 	return nil
 }
 

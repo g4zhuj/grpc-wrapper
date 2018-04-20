@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"google.golang.org/grpc/grpclog"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/naming"
 	"google.golang.org/grpc/status"
@@ -78,7 +80,8 @@ func (er *etcdRegistry) Register(ctx context.Context, target string, update nami
 			return err
 		}
 		etcdOpts := []etcd.OpOption{etcd.WithLease(lsRsp.ID)}
-		_, err = er.cli.KV.Put(ctx, target+"/"+update.Addr, string(upBytes), etcdOpts...)
+		key := target + "/" + update.Addr
+		_, err = er.cli.KV.Put(ctx, key, string(upBytes), etcdOpts...)
 		if err != nil {
 			return err
 		}
@@ -90,6 +93,7 @@ func (er *etcdRegistry) Register(ctx context.Context, target string, update nami
 			for {
 				_, ok := <-lsRspChan
 				if !ok {
+					grpclog.Fatalf("%v keepalive channel is closing", key)
 					break
 				}
 			}
@@ -123,7 +127,7 @@ func (ew *etcdWatcher) Next() ([]*naming.Update, error) {
 			updates = append(updates, &upt)
 		}
 		opts := []etcd.OpOption{etcd.WithRev(resp.Header.Revision + 1), etcd.WithPrefix(), etcd.WithPrevKV()}
-		ew.watchChan = ew.cli.Watch(ew.ctx, ew.target, opts...)
+		ew.watchChan = ew.cli.Watch(context.TODO(), ew.target, opts...)
 		return updates, nil
 	}
 

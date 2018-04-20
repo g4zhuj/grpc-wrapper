@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/grpclog"
+
 	"github.com/g4zhuj/grpc-wrapper/config"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 )
@@ -12,7 +14,7 @@ type grpcserver struct{}
 
 // SayHello implements helloworld.GreeterServer
 func (s *grpcserver) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	fmt.Printf("receive ctx %v, req : %v \n", ctx, *in)
+	grpclog.Infof("receive req : %v \n", *in)
 	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
 }
 
@@ -20,6 +22,10 @@ func main() {
 	cfg := config.RegistryConfig{
 		Endpoints: []string{"http://127.0.0.1:2379"},
 	}
+
+	//set zap logger
+	logcfg := config.LoggerConfig{}
+	grpclog.SetLoggerV2(logcfg.NewLogger())
 
 	reg, err := cfg.NewRegisty()
 	if err != nil {

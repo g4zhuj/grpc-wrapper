@@ -1,9 +1,6 @@
 package config
 
 import (
-	"sync/atomic"
-	"unsafe"
-
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/g4zhuj/grpc-wrapper/plugins"
 	"github.com/g4zhuj/grpc-wrapper/server"
@@ -64,8 +61,8 @@ type LoggerConfig struct {
 type OpenTracingConfig struct {
 }
 
-// 设置日志最低等级
-func setLogConsole(levelStr string) (level zapcore.Level, err error) {
+//
+func convertLogLevel(levelStr string) (level zapcore.Level) {
 	switch levelStr {
 	case "debug":
 		level = zap.DebugLevel
@@ -79,19 +76,28 @@ func setLogConsole(levelStr string) (level zapcore.Level, err error) {
 	return
 }
 
-func (lconf *LoggerConfig) NewLogger() {
-	proConf := zapcore.EncoderConfig{
-		TimeKey:        config.TimeKey,
-		LevelKey:       config.LevelKey,
-		NameKey:        "logger",
-		CallerKey:      config.CallerKey,
-		MessageKey:     config.MessageKey,
-		StacktraceKey:  config.TraceKey,
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder,
-		EncodeTime:     timeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
+//NewDefaultLoggerConfig create a default config
+func NewDefaultLoggerConfig() *LoggerConfig {
+	return &LoggerConfig{
+		Level:      "debug",
+		Filename:   "./logs",
+		MaxSize:    1,
+		MaxAge:     1,
+		MaxBackups: 10,
 	}
+}
+
+// 日志时间格式
+// func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+// 	enc.AppendString(t.Format("2006-01-02 15:04:05"))
+// }
+//NewLogger create logger by config
+func (lconf *LoggerConfig) NewLogger() *plugins.ZapLogger {
+	if lconf.Filename == "" {
+		logger, _ := zap.NewProduction(zap.AddCallerSkip(2))
+		return plugins.NewZapLogger(logger)
+	}
+
 	enCfg := zap.NewProductionEncoderConfig()
 	if lconf.CallFull {
 		enCfg.EncodeCaller = zapcore.FullCallerEncoder
@@ -101,12 +107,7 @@ func (lconf *LoggerConfig) NewLogger() {
 		zapcore.NewConsoleEncoder(enCfg)
 	}
 
-	if config.CallFull {
-		proConf.EncodeCaller = zapcore.FullCallerEncoder
-	} else {
-		proConf.EncodeCaller = zapcore.ShortCallerEncoder
-	}
-
+	//zapWriter := zapcore.
 	zapWriter := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   lconf.Filename,
 		MaxSize:    lconf.MaxSize,
@@ -114,27 +115,12 @@ func (lconf *LoggerConfig) NewLogger() {
 		MaxBackups: lconf.MaxBackups,
 		LocalTime:  lconf.LocalTime,
 	})
-	// var writer zapcore.WriteSyncer
-	// writers := []zapcore.WriteSyncer{}
-	// writers = append(writers, zapWriter)
-	// output := zapcore.NewMultiWriteSyncer(writers...)
 
-	//设置日志等级
-	newCore := zapcore.NewCore(encoder, zapWriter, zap.NewAtomicLevelAt(lconf.Level))
-	opts := []zap.Option{zap.ErrorOutput(writer)}
-	opts = append(opts, zap.AddCaller(), zap.AddCallerSkip(1))
-	if config.TraceOpen {
-		opts = append(opts, zap.AddStacktrace(config.TraceLevel))
-	}
-	zaploger := zap.New(newCore, opts...)
-	if ZapLogger == nil {
-		ZapLogger = zaploger
-	} else {
-		oldLoger := ZapLogger
-		atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&ZapLogger)), unsafe.Pointer(zaploger))
-		oldLoger.Sync()
-	}
-
+	newCore := zapcore.NewCore(encoder, zapWriter, zap.NewAtomicLevelAt(convertLogLevel(lconf.Level)))
+	opts := []zap.Option{zap.ErrorOutput(zapWriter)}
+	opts = append(opts, zap.AddCaller(), zap.AddCallerSkip(2))
+	logger := zap.New(newCore, opts...)
+	return plugins.NewZapLogger(logger)
 }
 
 //NewServer new server wrapper with config

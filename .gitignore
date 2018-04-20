@@ -1,1 +1,3 @@
 .vscode
+examples/client/client
+examples/server/server
