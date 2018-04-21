@@ -23,7 +23,7 @@ func NewServerWrapper(opts ...ServOptions) *ServerWrapper {
 	for _, opt := range opts {
 		opt(&servWrapper.sopts)
 	}
-	servWrapper.s = grpc.NewServer()
+	servWrapper.s = grpc.NewServer(servWrapper.sopts.grpcOpts...)
 	return &servWrapper
 }
 
