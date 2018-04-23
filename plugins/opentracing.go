@@ -20,22 +20,22 @@ type MDReaderWriter struct {
 	metadata.MD
 }
 
-//Set set key and valut to metadata
-func (w *MDReaderWriter) Set(key, val string) {
-	key = strings.ToLower(key)
-	w.MD[key] = append(w.MD[key], val)
-}
-
 //ForeachKey range all keys to call handler
-func (w *MDReaderWriter) ForeachKey(handler func(key, val string) error) error {
-	for k, vals := range w.MD {
-		for _, v := range vals {
+func (c MDReaderWriter) ForeachKey(handler func(key, val string) error) error {
+	for k, vs := range c.MD {
+		for _, v := range vs {
 			if err := handler(k, v); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+// Set implements Set() of opentracing.TextMapWriter
+func (c MDReaderWriter) Set(key, val string) {
+	key = strings.ToLower(key)
+	c.MD[key] = append(c.MD[key], val)
 }
 
 //OpenTracingClientInterceptor  rewrite client's interceptor with open tracing
@@ -66,7 +66,7 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer) grpc.UnaryClientInt
 			md = md.Copy()
 		}
 		mdWriter := MDReaderWriter{md}
-		err := tracer.Inject(cliSpan.Context(), opentracing.HTTPHeaders, mdWriter)
+		err := tracer.Inject(cliSpan.Context(), opentracing.TextMap, mdWriter)
 		if err != nil {
 			grpclog.Errorf("inject to metadata err %v", err)
 		}
