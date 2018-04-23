@@ -91,7 +91,7 @@ func OpentracingServerInterceptor(tracer opentracing.Tracer) grpc.UnaryServerInt
 		if !ok {
 			md = metadata.New(nil)
 		}
-		spanContext, err := tracer.Extract(opentracing.HTTPHeaders, MDReaderWriter{md})
+		spanContext, err := tracer.Extract(opentracing.TextMap, MDReaderWriter{md})
 		if err != nil && err != opentracing.ErrSpanContextNotFound {
 			grpclog.Errorf("extract from metadata err %v", err)
 		}
@@ -99,6 +99,7 @@ func OpentracingServerInterceptor(tracer opentracing.Tracer) grpc.UnaryServerInt
 			info.FullMethod,
 			ext.RPCServerOption(spanContext),
 			wrapper.TracingComponentTag,
+			ext.SpanKindRPCServer,
 		)
 		defer serverSpan.Finish()
 		ctx = opentracing.ContextWithSpan(ctx, serverSpan)
