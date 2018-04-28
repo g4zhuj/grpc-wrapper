@@ -23,8 +23,14 @@
     "mvcc/mvccpb",
     "pkg/types"
   ]
-  revision = "e348b1aedd9167360c466ae98f7343d3e22281f8"
-  version = "v3.3.3"
+  revision = "fdde8705f5bf9a6d9dbfb0220caf2ee1ac816be8"
+  version = "v3.3.4"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/g4zhuj/go-metrics-falcon"
+  packages = ["."]
+  revision = "5159ced4eafb74c41458ef7bf73020a4d87bb252"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -50,6 +56,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/grpc-ecosystem/go-grpc-middleware"
+  packages = ["."]
+  revision = "bc175326149c6c87ca6e2b9fe58cf6d2aa1036cd"
+
+[[projects]]
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
@@ -64,6 +76,12 @@
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/rcrowley/go-metrics"
+  packages = ["."]
+  revision = "d932a24a8ccb8fcadc993e5c6c58f93dac168294"
 
 [[projects]]
   name = "github.com/uber/jaeger-client-go"
@@ -157,7 +175,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
+  revision = "86e600f69ee4704c6efbf6a2a40a5c10700e76c2"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -202,6 +220,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "82d84804d3b8fb438b5831b1476dc941b504236e5c56f6b09ecb232bb365bffe"
+  inputs-digest = "b6fbafab68437a8f9b1aca1974a3e5495ae456727a17bd04f5151d197f8ca649"
   solver-name = "gps-cdcl"
   solver-version = 1

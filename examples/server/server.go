@@ -15,6 +15,8 @@ import (
 	jaeger "github.com/uber/jaeger-client-go"
 	jaegerCfg "github.com/uber/jaeger-client-go/config"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
+
+	grpcmd "github.com/grpc-ecosystem/go-grpc-middleware"
 )
 
 const (
@@ -92,9 +94,15 @@ func main() {
 	if err != nil {
 		grpclog.Errorf("new tracer err %v , continue", err)
 	}
-	if tracer != nil {
-		servOpts = append(servOpts, grpc.UnaryInterceptor(plugins.OpentracingServerInterceptor(tracer)))
-	}
+
+	//open falcon
+	falconReporter := plugins.NewDefaultFalconReporter()
+
+	chainInter := grpcmd.ChainUnaryServer(
+		plugins.OpentracingServerInterceptor(tracer),
+		plugins.MetricServerInterceptor(falconReporter),
+	)
+	servOpts = append(servOpts, grpc.UnaryInterceptor(chainInter))
 
 	servConf := config.ServiceConfig{
 		ServiceName:       serviceName,
