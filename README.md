@@ -20,7 +20,7 @@ jaeger [OK]
 falcon-plus [TODO] 
 
 
-## 2.使用方式
+## 2.使用方式
 #### client端
 ```go
 package main
