@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"context"
 	"io"
 	"os"
@@ -102,10 +103,14 @@ func main() {
 		name = os.Args[1]
 	}
 
-	rsp, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
-	if err != nil {
-		grpclog.Errorf("could not greet: %v", err)
+	for i:=0; i < 10000; i++{
+		n := rand.Intn(3)
+		rsp, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+		if err != nil {
+			grpclog.Errorf("could not greet: %v", err)
+		}
+		grpclog.Infof("Greeting: %s", rsp.Message)
+		time.Sleep(time.Second * time.Duration(n))
 	}
-	grpclog.Infof("Greeting: %s", rsp.Message)
-	time.Sleep(time.Second * 2)
+
 }

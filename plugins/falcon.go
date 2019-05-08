@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -27,7 +26,7 @@ type FalconReporter struct {
 func NewDefaultFalconReporter() *FalconReporter {
 	cfg := falconmetrics.DefaultFalconConfig
 	falcon := falconmetrics.NewFalcon(&cfg)
-	falcon.ReportRegistry(metrics.DefaultRegistry)
+	go falcon.ReportRegistry(metrics.DefaultRegistry)
 
 	fr := &FalconReporter{
 		falcon:   falcon,
@@ -38,24 +37,21 @@ func NewDefaultFalconReporter() *FalconReporter {
 }
 
 func (f *FalconReporter) Meter(name string, value int64) {
-	key := fmt.Sprintf("%v%v", MeterPre, name)
-	meter := metrics.GetOrRegisterMeter(key, f.registry)
+	meter := metrics.GetOrRegisterMeter(name, f.registry)
 	if meter != nil {
 		meter.Mark(value)
 	}
 }
 
 func (f *FalconReporter) Histogram(name string, value int64) {
-	key := fmt.Sprintf("%v%v", HistogramPre, name)
-	histogram := metrics.GetOrRegisterHistogram(key, f.registry, metrics.NewExpDecaySample(1028, 0.015))
+	histogram := metrics.GetOrRegisterHistogram(name, f.registry, metrics.NewExpDecaySample(1028, 0.015))
 	if histogram != nil {
 		histogram.Update(value)
 	}
 }
 
 func (f *FalconReporter) Gauge(name string, value int64) {
-	key := fmt.Sprintf("%v%v", GaugePre, name)
-	gauge := metrics.GetOrRegisterGauge(key, f.registry)
+	gauge := metrics.GetOrRegisterGauge(name, f.registry)
 	if gauge != nil {
 		gauge.Update(value)
 	}
@@ -75,12 +71,12 @@ func MetricClientInterceptor(reporter wrapper.MetricReporter) grpc.UnaryClientIn
 		defer func() {
 			//report time duration in millisecond
 			duration := time.Since(ts) / time.Millisecond
-			reporter.Histogram(wrapper.MetricClientCallDuration, int64(duration))
+			reporter.Histogram(wrapper.MetricClientCallDuration+method, int64(duration))
 		}()
-		reporter.Meter(wrapper.MetricClientCall, 1)
+		reporter.Meter(wrapper.MetricClientCall+method, 1)
 		err := invoker(ctx, method, req, resp, cc, opts...)
 		if err != nil {
-			reporter.Meter(wrapper.MetricClientCallErr, 1)
+			reporter.Meter(wrapper.MetricClientCallErr+method, 1)
 		}
 		return err
 	}
@@ -98,13 +94,13 @@ func MetricServerInterceptor(reporter wrapper.MetricReporter) grpc.UnaryServerIn
 		defer func() {
 			//report time duration in millisecond
 			duration := time.Since(ts) / time.Millisecond
-			reporter.Histogram(wrapper.MetricServerCallDuration, int64(duration))
+			reporter.Histogram(wrapper.MetricServerCallDuration+info.FullMethod, int64(duration))
 		}()
 
-		reporter.Meter(wrapper.MetricServerCall, 1)
+		reporter.Meter(wrapper.MetricServerCall+info.FullMethod, 1)
 		resp, err = handler(ctx, req)
 		if err != nil {
-			reporter.Meter(wrapper.MetricServerCallErr, 1)
+			reporter.Meter(wrapper.MetricServerCallErr+info.FullMethod, 1)
 		}
 		return
 	}

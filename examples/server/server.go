@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"time"
+	"math/rand"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -31,12 +32,13 @@ func (s *grpcserver) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.Hel
 
 	//start a new span, eg.(mysql)
 	if parent := opentracing.SpanFromContext(ctx); parent != nil {
+		n := rand.Intn(100)
 		pctx := parent.Context()
 		if tracer := opentracing.GlobalTracer(); tracer != nil {
 			mysqlSpan := tracer.StartSpan("FindUserTable", opentracing.ChildOf(pctx))
 
 			//do mysql operations
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * time.Duration(n))
 
 			defer mysqlSpan.Finish()
 		}

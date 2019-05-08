@@ -1,12 +1,12 @@
 package wrapper
 
 var (
-	MetricClientCall         = "client.call"
-	MetricServerCall         = "server.call"
-	MetricClientCallDuration = "client.call.duration"
-	MetricServerCallDuration = "server.call.duration"
-	MetricClientCallErr      = "client.call.err"
-	MetricServerCallErr      = "server.call.err"
+	MetricClientCall         = "client"
+	MetricServerCall         = "server"
+	MetricClientCallDuration = "client.duration"
+	MetricServerCallDuration = "server.duration"
+	MetricClientCallErr      = "client.err"
+	MetricServerCallErr      = "server.err"
 )
 
 //MetricReporter define the reporter to report metrics
