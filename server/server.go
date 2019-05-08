@@ -38,6 +38,7 @@ func (sw *ServerWrapper) Start() error {
 		return err
 	}
 
+	grpclog.Info("start registry...")
 	//registry
 	if sw.sopts.registry != nil {
 		err := sw.sopts.registry.Register(context.TODO(), sw.sopts.serviceName,
@@ -51,6 +52,7 @@ func (sw *ServerWrapper) Start() error {
 
 	// Register reflection service on gRPC server.
 	reflection.Register(sw.s)
+	grpclog.Info("service starting now...")
 	if err := sw.s.Serve(lis); err != nil {
 		return err
 	}

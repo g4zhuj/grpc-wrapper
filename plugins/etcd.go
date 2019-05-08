@@ -85,6 +85,7 @@ func (er *etcdRegistry) Register(ctx context.Context, target string, update nami
 		if err != nil {
 			return err
 		}
+		grpclog.Infof("etcd put key:%v channel value:%v", key, string(upBytes))
 		lsRspChan, err := er.lsCli.KeepAlive(context.TODO(), lsRsp.ID)
 		if err != nil {
 			return err

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"context"
 	"io"
 	"os"
@@ -15,6 +16,7 @@ import (
 	jaeger "github.com/uber/jaeger-client-go"
 	jaegerCfg "github.com/uber/jaeger-client-go/config"
 
+	grpcmd "github.com/grpc-ecosystem/go-grpc-middleware"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 )
 
@@ -75,9 +77,15 @@ func main() {
 	if err != nil {
 		grpclog.Errorf("new tracer err %v , continue", err)
 	}
-	if tracer != nil {
-		dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(plugins.OpenTracingClientInterceptor(tracer)))
-	}
+
+	//open falcon
+	falconReporter := plugins.NewDefaultFalconReporter()
+
+	chainInter := grpcmd.ChainUnaryClient(
+		plugins.OpenTracingClientInterceptor(tracer),
+		plugins.MetricClientInterceptor(falconReporter),
+	)
+	dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(chainInter))
 
 	//time.Sleep(time.Second * 1)
 	conn, err := grpc.Dial(servName, dialOpts...)
@@ -95,10 +103,14 @@ func main() {
 		name = os.Args[1]
 	}
 
-	rsp, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
-	if err != nil {
-		grpclog.Errorf("could not greet: %v", err)
+	for i:=0; i < 10000; i++{
+		n := rand.Intn(3)
+		rsp, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+		if err != nil {
+			grpclog.Errorf("could not greet: %v", err)
+		}
+		grpclog.Infof("Greeting: %s", rsp.Message)
+		time.Sleep(time.Second * time.Duration(n))
 	}
-	grpclog.Infof("Greeting: %s", rsp.Message)
-	time.Sleep(time.Second * 2)
+
 }

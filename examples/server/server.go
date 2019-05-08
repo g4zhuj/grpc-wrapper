@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"time"
+	"math/rand"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -15,6 +16,8 @@ import (
 	jaeger "github.com/uber/jaeger-client-go"
 	jaegerCfg "github.com/uber/jaeger-client-go/config"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
+
+	grpcmd "github.com/grpc-ecosystem/go-grpc-middleware"
 )
 
 const (
@@ -29,12 +32,13 @@ func (s *grpcserver) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.Hel
 
 	//start a new span, eg.(mysql)
 	if parent := opentracing.SpanFromContext(ctx); parent != nil {
+		n := rand.Intn(100)
 		pctx := parent.Context()
 		if tracer := opentracing.GlobalTracer(); tracer != nil {
 			mysqlSpan := tracer.StartSpan("FindUserTable", opentracing.ChildOf(pctx))
 
 			//do mysql operations
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * time.Duration(n))
 
 			defer mysqlSpan.Finish()
 		}
@@ -92,9 +96,15 @@ func main() {
 	if err != nil {
 		grpclog.Errorf("new tracer err %v , continue", err)
 	}
-	if tracer != nil {
-		servOpts = append(servOpts, grpc.UnaryInterceptor(plugins.OpentracingServerInterceptor(tracer)))
-	}
+
+	//open falcon
+	falconReporter := plugins.NewDefaultFalconReporter()
+
+	chainInter := grpcmd.ChainUnaryServer(
+		plugins.OpentracingServerInterceptor(tracer),
+		plugins.MetricServerInterceptor(falconReporter),
+	)
+	servOpts = append(servOpts, grpc.UnaryInterceptor(chainInter))
 
 	servConf := config.ServiceConfig{
 		ServiceName:       serviceName,
